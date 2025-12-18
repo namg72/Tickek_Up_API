@@ -7,7 +7,6 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log; // Para ver errores si fallara
 
 class ApiAuthController extends Controller
 {
@@ -29,7 +28,7 @@ class ApiAuthController extends Controller
             }
 
             // 2. Generar token
-            $token = $user->createToken('postman')->plainTextToken;
+            $token = $user->createToken('auth_token')->plainTextToken;
 
             // 3. Obtener el rol de forma segura
             $role = $user->getRoleNames()->first() ?? 'no_role';
@@ -48,5 +47,31 @@ class ApiAuthController extends Controller
 
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+
+    public function register(Request $request)
+    {
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
+            'password' => ['required', 'confirmed',],
+        ]);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+
+
+        return response()->json([
+            'user' => $user,
+            'token' => $token,
+        ], 201);
     }
 }

@@ -7,14 +7,19 @@ use App\Http\Controllers\Api\Auth\ApiAuthController;
 use App\Http\Controllers\Api\Auth\ChangePasswordController;
 use App\Http\Controllers\Api\Category\ApiCategoryController;
 use App\Http\Controllers\Api\Ticket\ApiTicketController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [ApiAuthController::class, 'login']);
+Route::post('/register', [ApiAuthController::class, 'register']);
 
 
 
 Route::middleware('auth:sanctum')->group(function () {
     //user
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
     Route::get('/users', [ApiUsersController::class, 'index']);
     Route::get('/user/{id}', [ApiUsersController::class, 'show']);
     Route::post('user/create', [ApiUsersController::class, 'store']);
