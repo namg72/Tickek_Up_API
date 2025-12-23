@@ -5,9 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use  App\Models\Ticket;
 use  App\Models\User;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TicketComment extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'message',
         'ticket_id',

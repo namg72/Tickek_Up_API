@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\Ticket;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TicketRequest;
 use App\Models\Ticket;
+use App\Models\TicketCategory;
 use App\Models\TicketComment;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -20,7 +21,7 @@ class ApiTicketController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Ticket::query();
+        $query = Ticket::with(['user:id,name', 'category:id,name', 'supervisor:id,name']);
 
         $user = $request->user();
 
@@ -34,6 +35,13 @@ class ApiTicketController extends Controller
             $query->where('user_id', $user->id);
         }
 
+        //ticket por categoria 
+        $totalTickets = (clone $query)->count();
+
+        $pendingCount = (clone $query)->where('status', 'pending')->count();
+        $reviewCount = (clone $query)->where('status', 'review')->count();
+        $approvedCount = (clone $query)->where('status', 'approved')->count();
+        $rejectedCount = (clone $query)->where('status', 'rejected')->count();
         //Filtrado por año
 
 
@@ -60,6 +68,7 @@ class ApiTicketController extends Controller
 
         $tickets = $query->orderBy('created_at', 'desc')->paginate(10);
 
+        $supervisor = User::find($user->supervisor_id);
 
 
         $years = Ticket::selectRaw('YEAR(created_at) as year')
@@ -76,13 +85,23 @@ class ApiTicketController extends Controller
         }
         return response()->json([
             'tickets' => $tickets,
+            'user_supervisor' => $supervisor,
             'filters' => [
                 'year' => $request->year,
                 'month' => $request->month,
                 'user_id' => $request->user_id,
             ],
             'years' => $years,
-            'users' => $users,
+            'allUser' => $users,
+            'currentUser' => $user,
+            'ticketsCounts' => [
+                'totalTickets' => $totalTickets,
+                'pending' => $pendingCount,
+                'approved' => $approvedCount,
+                'review' => $reviewCount,
+                'rejected' => $rejectedCount,
+
+            ]
         ]);
     }
 
@@ -166,20 +185,15 @@ class ApiTicketController extends Controller
      */
     public function show(string $id)
     {
-        $ticket = Ticket::with(['comments.user', 'user'])->findOrFail($id);
+        $ticket = Ticket::with(['comments.user', 'user', 'category:id,name', 'supervisor:id,name'])->findOrFail($id);
+        $categories = TicketCategory::all();
 
 
 
         return response()->json([
-            'ticket' => [
-                'id'            => $ticket->id,
-                'user' => $ticket->user->name,
-                'title'          => $ticket->title,
-                'description'         => $ticket->description,
-                'supervisor_id' => $ticket->supervisor_id,
-                'status'     => $ticket->status,
-                'comments' => $ticket->comments
-            ]
+
+            'categories' => $categories,
+            'ticket' => $ticket
 
         ], 200);
     }
@@ -253,6 +267,7 @@ class ApiTicketController extends Controller
                 'total_amount' => $total,
                 'amount' => $base,
                 'iva_amount' => $iva,
+
             ]);
 
             $ticket->save();

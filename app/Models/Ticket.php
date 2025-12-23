@@ -32,7 +32,8 @@ class Ticket extends Model
         'amount'              => 'decimal:2',
         'iva_amount'          => 'decimal:2',
         'total_amount'        => 'decimal:2',
-        'finalized_by_admin'  => 'boolean'
+        'finalized_by_admin'  => 'boolean',
+        'updated_at' => 'date',
     ];
 
     public function user()

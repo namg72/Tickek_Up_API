@@ -1,12 +1,15 @@
 <?php
 
-use App\Http\Api\Controllers\TicketComment\ApiTicketCommentController;
+
 use App\Http\Controllers\Api\User\ApiUsersController;
 use App\Http\Controllers\Api\Auth\ApiAuthController;
 
 use App\Http\Controllers\Api\Auth\ChangePasswordController;
 use App\Http\Controllers\Api\Category\ApiCategoryController;
 use App\Http\Controllers\Api\Ticket\ApiTicketController;
+use App\Http\Controllers\Api\Ticket\TicketImageController;
+use App\Http\Controllers\Api\TicketComment\ApiTicketCommentController;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -18,7 +21,9 @@ Route::post('/register', [ApiAuthController::class, 'register']);
 Route::middleware('auth:sanctum')->group(function () {
     //user
     Route::get('/user', function (Request $request) {
-        return $request->user();
+        $user = $request->user()->load(['roles', 'supervisor']);
+        $user->role = $user->getRoleNames()->first(); // o el que corresponda
+        return $user;
     });
     Route::get('/users', [ApiUsersController::class, 'index']);
     Route::get('/user/{id}', [ApiUsersController::class, 'show']);
@@ -35,6 +40,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/ticket/status/{id}', [ApiTicketController::class, 'ticketStatus']);
     Route::get('/ticket/{id}/image', [ApiTicketController::class, 'image']);
     Route::get('/ticket/show/{id}', [ApiTicketController::class, 'show']);
+
+
+    // Ticket image
+    Route::get('/tickets/{ticket}/image', [TicketImageController::class, 'show'])
+        ->name('tickets.image');
+
+    Route::get('/tickets/{ticket}/image/download', [TicketImageController::class, 'download'])
+        ->name('tickets.image.download');
+
+
+
+
 
     //Comments
     Route::get('/ticket/show_Comments/{id}', [ApiTicketCommentController::class, 'index']);
